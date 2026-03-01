@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import type { TelegramUpdate } from "@/types";
 import { sendMessage } from "@/lib/telegram";
 import { getInputText } from "@/lib/input";
-import { extractEntities, buildSearchQuery } from "@/lib/entities";
+import { findCandidateSources } from "@/lib/search";
+import { rankSourcesByMeaning } from "@/lib/ai";
 
 const MAX_TEXT_LENGTH = 10000;
 
@@ -14,10 +15,32 @@ function getChatIdAndText(body: unknown): { chatId: number; text: string } | nul
   return { chatId, text: rawText.slice(0, MAX_TEXT_LENGTH) };
 }
 
+function formatResult(sources: { url: string; reason?: string }[], confidence: number): string {
+  if (sources.length === 0) {
+    return `Подходящих источников не найдено. Уверенность: ${confidence}%.`;
+  }
+  const lines = sources.map(
+    (s) => (s.reason ? `• ${s.url}\n  ${s.reason}` : `• ${s.url}`)
+  );
+  return [`Найденные источники (уверенность: ${confidence}%):`, "", ...lines].join("\n");
+}
+
 async function processUpdate(chatId: number, rawInput: string): Promise<void> {
   const token = process.env.BOT_TOKEN;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  const googleApiKey = process.env.GOOGLE_CSE_API_KEY;
+  const googleCx = process.env.GOOGLE_CSE_CX;
+
   if (!token) {
     console.error("[webhook] BOT_TOKEN не задан");
+    return;
+  }
+  if (!openRouterKey) {
+    await sendMessage(token, chatId, "Ошибка: OPENROUTER_API_KEY не задан.");
+    return;
+  }
+  if (!googleApiKey || !googleCx) {
+    await sendMessage(token, chatId, "Ошибка: GOOGLE_CSE_API_KEY или GOOGLE_CSE_CX не заданы.");
     return;
   }
 
@@ -28,16 +51,25 @@ async function processUpdate(chatId: number, rawInput: string): Promise<void> {
       return;
     }
 
-    const entities = extractEntities(inputText);
-    const query = buildSearchQuery(inputText, entities);
+    const candidates = await findCandidateSources(inputText, {
+      apiKey: googleApiKey,
+      cx: googleCx,
+      num: 10,
+    });
 
-    const summary = [
-      "Текст получен, сущности извлечены.",
-      `Даты: ${query.entities.dates.length}; числа: ${query.entities.numbers.length}; имена: ${query.entities.names.length}; ссылки: ${query.entities.links.length}; утверждения: ${query.entities.claims.length}.`,
-      "Этап поиска источников пока не реализован.",
-    ].join("\n");
+    if (candidates.length === 0) {
+      await sendMessage(token, chatId, "Поиск не вернул результатов. Попробуйте другой запрос.");
+      return;
+    }
 
-    await sendMessage(token, chatId, summary);
+    const { sources, confidence } = await rankSourcesByMeaning(
+      inputText,
+      candidates,
+      openRouterKey
+    );
+
+    const message = formatResult(sources, confidence);
+    await sendMessage(token, chatId, message);
   } catch (err) {
     console.error("[webhook] processUpdate error:", err);
     const msg = err instanceof Error ? err.message : "Произошла ошибка.";

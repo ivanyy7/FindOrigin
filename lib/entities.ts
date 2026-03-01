@@ -35,19 +35,19 @@ function extractDates(text: string): string[] {
     const m = text.match(re);
     if (m) m.forEach((s) => set.add(s.trim()));
   }
-  return [...set];
+  return Array.from(set);
 }
 
 function extractNumbers(text: string): string[] {
   const m = text.match(NUMBER_PATTERN);
   if (!m) return [];
-  return [...new Set(m.map((s) => s.trim()).filter((s) => s.length <= 30))];
+  return Array.from(new Set(m.map((s) => s.trim()).filter((s) => s.length <= 30)));
 }
 
 function extractLinks(text: string): string[] {
   const m = text.match(LINK_PATTERN);
   if (!m) return [];
-  return [...new Set(m.map((s) => s.trim()))];
+  return Array.from(new Set(m.map((s) => s.trim())));
 }
 
 /** Простая эвристика имён: слова с заглавной буквы (2+ буквы), не в начале предложения опционально. */
@@ -80,7 +80,7 @@ function extractClaims(text: string): string[] {
   for (const s of sentences) {
     if (s.length >= 10 && s.length <= 120 && !claims.includes(s)) claims.push(s);
   }
-  return [...new Set(claims)].slice(0, 20);
+  return Array.from(new Set(claims)).slice(0, 20);
 }
 
 /**

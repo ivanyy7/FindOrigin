@@ -22,6 +22,20 @@ export interface SearchQuery {
   rawText: string;
 }
 
+/** Кандидат-источник из поиска (Google Custom Search и т.п.) */
+export interface SearchCandidate {
+  url: string;
+  title: string;
+  snippet: string;
+}
+
+/** Источник, отранжированный AI (URL + обоснование + уверенность) */
+export interface RankedSource {
+  url: string;
+  reason?: string;
+  confidence?: number;
+}
+
 /** Ответ бота: источники и уверенность (для этапа AI) */
 export interface BotResponse {
   sources: { url: string; reason?: string }[];
