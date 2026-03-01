@@ -96,6 +96,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "BOT_TOKEN not set" }, { status: 500 });
   }
 
+  // Мгновенный ответ — проверка, что запрос дошёл и токен верный
+  await sendMessage(token, chatId, "Получил сообщение, ищу источники…").catch(() => {});
+
   processUpdate(chatId, text).catch(async (err) => {
     console.error("[webhook] background process error:", err);
     try {
