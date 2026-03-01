@@ -1,11 +1,12 @@
 /**
- * Ранжирование источников по смыслу через OpenRouter (модель openai/gpt-4o-mini).
+ * Ранжирование источников по смыслу через OpenRouter.
+ * По умолчанию — бесплатная модель openai/gpt-oss-20b:free; можно задать OPENROUTER_MODEL в .env.
  */
 
 import type { SearchCandidate, RankedSource } from "@/types";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "openai/gpt-4o-mini";
+const DEFAULT_MODEL = "openai/gpt-oss-20b:free";
 
 const SYSTEM_PROMPT = `Ты помощник, который сравнивает смысл текста пользователя с кандидатами-источниками и выбирает 1–3 наиболее релевантных.
 Ответь строго в формате JSON без лишнего текста:
@@ -41,7 +42,7 @@ export async function rankSourcesByMeaning(
   }
 
   const body = {
-    model: MODEL,
+    model: process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL,
     messages: [
       { role: "system" as const, content: SYSTEM_PROMPT },
       {
