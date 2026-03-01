@@ -96,9 +96,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "BOT_TOKEN not set" }, { status: 500 });
   }
 
-  processUpdate(chatId, text).catch((err) =>
-    console.error("[webhook] background process error:", err)
-  );
+  processUpdate(chatId, text).catch(async (err) => {
+    console.error("[webhook] background process error:", err);
+    try {
+      await sendMessage(token, chatId, "Произошла ошибка при обработке. Попробуйте позже.");
+    } catch {
+      // игнорируем, если не удалось отправить сообщение об ошибке
+    }
+  });
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
