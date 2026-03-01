@@ -45,6 +45,26 @@ async function processUpdate(chatId: number, rawInput: string): Promise<void> {
   }
 
   try {
+    const trimmed = rawInput.trim();
+    if (trimmed === "/start" || trimmed.toLowerCase() === "/start") {
+      await sendMessage(
+        token,
+        chatId,
+        "Привет! Пришлите текст новости или утверждения — найду возможные источники. Можно также прислать ссылку на пост t.me/…"
+      );
+      return;
+    }
+
+    const greeting = /^(привет|здравствуй|хай|hello|hi|здарова|как дела|что делаешь)(\s+бот)?[\.\!\)]*$/i;
+    if (greeting.test(trimmed)) {
+      await sendMessage(
+        token,
+        chatId,
+        "Привет! Напишите текст или утверждение для проверки — подберу источники. Либо ссылку на пост t.me/…"
+      );
+      return;
+    }
+
     const inputText = await getInputText(rawInput);
     if (!inputText) {
       await sendMessage(token, chatId, "Не удалось получить текст. Пришлите текст сообщения или ссылку на пост t.me/…");
@@ -96,8 +116,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "BOT_TOKEN not set" }, { status: 500 });
   }
 
-  // Мгновенный ответ — проверка, что запрос дошёл и токен верный
-  await sendMessage(token, chatId, "Получил сообщение, ищу источники…").catch(() => {});
+  const t = text.trim();
+  const isQuickReply = t === "/start" || /^(привет|здравствуй|хай|hello|hi|здарова|как дела|что делаешь)(\s+бот)?[\.\!\)]*$/i.test(t);
+  if (!isQuickReply) {
+    await sendMessage(token, chatId, "Получил сообщение, ищу источники…").catch(() => {});
+  }
 
   processUpdate(chatId, text).catch(async (err) => {
     console.error("[webhook] background process error:", err);
