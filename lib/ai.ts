@@ -3,10 +3,10 @@
  * По умолчанию — бесплатная модель openai/gpt-oss-120b:free; можно задать OPENROUTER_MODEL в .env.
  */
 
-import type { SearchCandidate, RankedSource } from "@/types";
+import type { SearchCandidate, RankedSource } from "../types";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-120b:free";
+const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 const SYSTEM_PROMPT = `Ты помощник, который сравнивает смысл текста пользователя с кандидатами-источниками и выбирает 1–3 наиболее релевантных.
 Ответь строго в формате JSON без лишнего текста:

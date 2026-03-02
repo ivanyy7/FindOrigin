@@ -2,7 +2,7 @@
  * Извлечение сущностей из текста: даты, числа, имена, ссылки, ключевые утверждения.
  */
 
-import type { ExtractedEntities, SearchQuery } from "@/types";
+import type { ExtractedEntities, SearchQuery } from "../types";
 
 /** Нормализация текста: пробелы, переносы, лишние символы. */
 export function normalizeText(text: string): string {
