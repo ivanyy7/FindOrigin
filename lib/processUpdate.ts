@@ -5,7 +5,7 @@
 
 import { sendMessage } from "./telegram";
 import { getInputText } from "./input";
-import { findCandidateSources } from "./search";
+import { findCandidateSourcesSimple } from "./search";
 import { rankSourcesByMeaning } from "./ai";
 
 export function formatResult(
@@ -24,8 +24,6 @@ export function formatResult(
 export async function processUpdate(chatId: number, rawInput: string): Promise<void> {
   const token = process.env.BOT_TOKEN;
   const openRouterKey = process.env.OPENROUTER_API_KEY;
-  const googleApiKey = process.env.GOOGLE_CSE_API_KEY;
-  const googleCx = process.env.GOOGLE_CSE_CX;
 
   if (!token) {
     console.error("[processUpdate] BOT_TOKEN не задан");
@@ -33,10 +31,6 @@ export async function processUpdate(chatId: number, rawInput: string): Promise<v
   }
   if (!openRouterKey) {
     await sendMessage(token, chatId, "Ошибка: OPENROUTER_API_KEY не задан.");
-    return;
-  }
-  if (!googleApiKey || !googleCx) {
-    await sendMessage(token, chatId, "Ошибка: GOOGLE_CSE_API_KEY или GOOGLE_CSE_CX не заданы.");
     return;
   }
 
@@ -71,11 +65,7 @@ export async function processUpdate(chatId: number, rawInput: string): Promise<v
       return;
     }
 
-    const candidates = await findCandidateSources(inputText, {
-      apiKey: googleApiKey,
-      cx: googleCx,
-      num: 10,
-    });
+    const candidates = await findCandidateSourcesSimple(inputText, 10);
 
     if (candidates.length === 0) {
       await sendMessage(token, chatId, "Поиск не вернул результатов. Попробуйте другой запрос.");

@@ -1,5 +1,9 @@
 /**
- * Поиск кандидатов-источников: сначала Google Custom Search, при ошибке — запасной поиск через DuckDuckGo (без ключа).
+ * Поиск кандидатов-источников.
+ *
+ * В проекте предусмотрена поддержка Google Custom Search API (через SearchOptions и GOOGLE_CSE_URL),
+ * но в текущей конфигурации для реального поиска используется только DuckDuckGo без ключей,
+ * чтобы бот работал без привязанного биллинга в Google Cloud.
  */
 
 import type { SearchCandidate } from "../types";
@@ -85,6 +89,7 @@ async function searchDuckDuckGo(query: string): Promise<SearchCandidate[]> {
 
 /**
  * Поиск по запросу: сначала Google, при ошибке (например 403) — DuckDuckGo.
+ * Эта функция сохраняет исходное поведение для случаев, когда Google Custom Search доступен.
  */
 export async function findCandidateSources(
   query: string,
@@ -130,4 +135,18 @@ export async function findCandidateSources(
       "Поиск недоступен: у проекта нет доступа к Google Custom Search API (403). Запасной поиск не дал результатов. Проверьте настройки в Google Cloud и Programmable Search Engine или попробуйте позже."
     );
   }
+}
+
+/**
+ * Упрощённый поиск кандидатов-источников только через DuckDuckGo.
+ * Используется ботом по умолчанию, чтобы не зависеть от Google Custom Search и биллинга.
+ */
+export async function findCandidateSourcesSimple(
+  query: string,
+  num: number = MAX_RESULTS
+): Promise<SearchCandidate[]> {
+  const trimmed = query.trim().slice(0, 500);
+  if (!trimmed) return [];
+  const results = await searchDuckDuckGo(trimmed);
+  return results.slice(0, Math.min(num, MAX_RESULTS));
 }
