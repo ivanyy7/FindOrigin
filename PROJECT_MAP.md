@@ -28,7 +28,7 @@
 
 - `app/api/webhook/route.ts` — точка входа: приём POST от Telegram, валидация, быстрый ответ, вызов `processUpdate`.
 - `app/api/tma/search/route.ts` — API для Mini App: приём текста, вызов getInputText + поиск + AI, ответ в JSON.
-- `app/tma/page.tsx` — клиентская страница Mini App (форма, запрос к /api/tma/search, отображение источников и уверенности); `app/tma/layout.tsx` подключает скрипт Telegram Web App.
+- `app/tma/page.tsx` — клиентская страница Mini App: форма, запрос к /api/tma/search, отображение результата (заголовок «Результаты анализа», сводный блок, карточки источников); кнопка «История» — список запросов из localStorage (до 30), раскрытие по клику, «Очистить». `app/tma/layout.tsx` подключает скрипт Telegram Web App.
 - `lib/processUpdate.ts` — оркестрация: приветствия, получение текста через `getInputText`, поиск через `findCandidateSourcesSimple`, ранжирование через `rankSourcesByMeaning` / `explainWithoutSources`, отправка ответа через `sendMessage`.
 - `lib/telegram.ts` — отправка сообщений в Telegram (sendMessage).
 - `lib/input.ts` — получение текста для анализа: из `message.text` или из ссылки на пост (getInputText).
