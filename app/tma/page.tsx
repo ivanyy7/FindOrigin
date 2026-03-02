@@ -14,6 +14,13 @@ type TmaError = {
   error: string;
 };
 
+type TelegramWebApp = {
+  ready: () => void;
+  expand: () => void;
+  setHeaderColor?: (c: string) => void;
+  setBackgroundColor?: (c: string) => void;
+};
+
 export default function TmaPage() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +30,8 @@ export default function TmaPage() {
   // Интеграция с Telegram WebApp: тема и готовность
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const tg = (window as unknown as { Telegram?: { WebApp?: { ready: () => void; expand: () => void; setHeaderColor?: (c: string) => void; setBackgroundColor?: (c: string) => void } }).Telegram?.WebApp;
+    const win = window as unknown as { Telegram?: { WebApp?: TelegramWebApp } };
+    const tg = win.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
