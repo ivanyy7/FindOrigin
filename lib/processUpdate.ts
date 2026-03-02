@@ -6,7 +6,7 @@
 import { sendMessage } from "./telegram";
 import { getInputText } from "./input";
 import { findCandidateSourcesSimple } from "./search";
-import { rankSourcesByMeaning } from "./ai";
+import { rankSourcesByMeaning, explainWithoutSources } from "./ai";
 
 export function formatResult(
   sources: { url: string; reason?: string }[],
@@ -68,7 +68,13 @@ export async function processUpdate(chatId: number, rawInput: string): Promise<v
     const candidates = await findCandidateSourcesSimple(inputText, 10);
 
     if (candidates.length === 0) {
-      await sendMessage(token, chatId, "Поиск не вернул результатов. Попробуйте другой запрос.");
+      // Если внешний поиск ничего не нашёл, всё равно даём пользователю полезный ответ через AI.
+      const explanation = await explainWithoutSources(inputText, openRouterKey);
+      await sendMessage(
+        token,
+        chatId,
+        `Поиск не нашёл конкретных ссылок, но вот разбор новости:\n\n${explanation}`
+      );
       return;
     }
 

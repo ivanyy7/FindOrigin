@@ -97,3 +97,56 @@ export async function rankSourcesByMeaning(
 
   return { sources, confidence };
 }
+
+const SYSTEM_PROMPT_EXPLANATION = `Ты помощник, который проверяет новостные утверждения и помогает пользователю разобраться.
+Когда у тебя НЕТ списка конкретных ссылок из поиска, ты всё равно должен:
+- кратко пересказать суть новости;
+- объяснить, насколько она кажется правдоподобной;
+- указать типы источников, где такое обычно освещают (официальный сайт компании, крупные СМИ, профильные медиа), но БЕЗ выдумывания точных URL.
+Ответь обычным текстом на русском языке, без JSON.`;
+
+/**
+ * Fallback: если поиск не дал ссылок, даём пользователю осмысленное объяснение новости.
+ */
+export async function explainWithoutSources(
+  userText: string,
+  apiKey: string
+): Promise<string> {
+  const body = {
+    model: process.env.OPENROUTER_MODEL ?? DEFAULT_MODEL,
+    messages: [
+      { role: "system" as const, content: SYSTEM_PROMPT_EXPLANATION },
+      {
+        role: "user" as const,
+        content: `Пользователь прислал новость или утверждение:\n\n${userText.slice(
+          0,
+          4000
+        )}\n\nОбъясни, о чём речь, насколько это кажется реалистичным и какие типы источников могли бы это подтверждать.`,
+      },
+    ],
+    temperature: 0.3,
+    max_tokens: 800,
+  };
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(60_000),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`OpenRouter API error: ${res.status} ${err}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const content = data.choices?.[0]?.message?.content?.trim();
+  if (!content) throw new Error("Пустой ответ OpenRouter");
+  return content;
+}
